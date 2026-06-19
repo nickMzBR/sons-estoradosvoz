@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sitesem nome sla</title>
+    <title>Mesa de Voz Humana Pro 10x</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -112,7 +112,7 @@
 
 <div class="container">
     <h2>Mesa de Voz Humana 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Sistema Anti-Bloqueio para Textos Longos e Rimas.</p>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Sistema Servidor Próprio anti-bloqueio para rimas longas.</p>
     
     <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
 
@@ -146,16 +146,13 @@ function atualizarLabels() {
     document.getElementById('val-altitude').innerText = `${txtAlt} (${alt}x)`;
 }
 
-// Junta vários pedaços de áudio decodificados em um único bloco de memória continuo
 function concatenarAudioBuffers(audioCtx, listaBuffers) {
     if (listaBuffers.length === 0) return null;
-    
     let canais = listaBuffers[0].numberOfChannels;
     let taxaAmostragem = listaBuffers[0].sampleRate;
     let tamanhoTotal = listaBuffers.reduce((acc, buf) => acc + buf.length, 0);
     
     let bufferFinal = audioCtx.createBuffer(canais, tamanhoTotal, taxaAmostragem);
-    
     for (let canal = 0; canal < canais; canal++) {
         let posicaoAtual = 0;
         for (let buf of listaBuffers) {
@@ -166,7 +163,6 @@ function concatenarAudioBuffers(audioCtx, listaBuffers) {
     return bufferFinal;
 }
 
-// Quebra o texto inteligentemente em blocos menores para contornar o limite do Google
 function dividirTextoEmPedaços(texto, limite = 120) {
     let frases = texto.match(/[^,.\n!?]+[,.\n!?]*/g) || [texto];
     let pedacos = [];
@@ -224,21 +220,10 @@ function modificarEEstourarWav(buffer, multiplicador, altitude) {
 }
 
 async function baixarAudioPedaço(textoPedaço) {
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=pt-BR&client=tw-ob&q=${encodeURIComponent(textoPedaço)}`;
-    const proxies = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(ttsUrl)}`,
-        `https://corsproxy.io/?url=${encodeURIComponent(ttsUrl)}`
-    ];
-
-    for (let url of proxies) {
-        try {
-            const res = await fetch(url);
-            if (res.ok) return await res.arrayBuffer();
-        } catch (e) {
-            console.warn("Proxy instável, tentando rota alternativa...");
-        }
-    }
-    throw new Error("Falha no download do bloco.");
+    const url = `/api/tts?text=${encodeURIComponent(textoPedaço)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Falha na API");
+    return await res.arrayBuffer();
 }
 
 async function gerarVozModificada() {
@@ -251,21 +236,16 @@ async function gerarVozModificada() {
 
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Divide o textão em fatias seguras
         const pedacosTexto = dividirTextoEmPedaços(textoCompleto);
         const listaBuffersDecodificados = [];
 
-        // Baixa e decodifica cada bloco de texto um por um
         for (let pedaco of pedacosTexto) {
             const arrayBuffer = await baixarAudioPedaço(pedaco);
             const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
             listaBuffersDecodificados.push(decodedBuffer);
         }
 
-        // Funde todas as fatias em uma única track humana contínua
         const originalBuffer = concatenarAudioBuffers(audioCtx, listaBuffersDecodificados);
-        
         const multiplicador = parseFloat(document.getElementById('ganho').value);
         const altitude = parseFloat(document.getElementById('altitude').value);
         
@@ -280,7 +260,7 @@ async function gerarVozModificada() {
         player.play();
 
     } catch (e) {
-        alert("Erro ao processar. Tente clicar novamente no botão.");
+        alert("Erro ao processar as frequências.");
         console.error(e);
     } finally {
         btn.disabled = false;
