@@ -2,20 +2,27 @@ export default async function handler(req, res) {
     const { text } = req.query;
     if (!text) return res.status(400).send('Texto ausente');
 
-    // Monta a URL do Google Tradutor
     const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=pt-BR&client=tw-ob&q=${encodeURIComponent(text)}`;
 
     try {
-        const googleRes = await fetch(url);
+        const googleRes = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+            }
+        });
+        
         if (!googleRes.ok) throw new Error('Falha no Google TTS');
         
         const arrayBuffer = await googleRes.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
         
-        // Retorna o áudio direto pro seu site
+        // Configurações estritas de cabeçalho para o navegador aceitar o áudio
         res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Content-Length', buffer.length);
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.send(Buffer.from(arrayBuffer));
+        
+        return res.status(200).send(buffer);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 }
