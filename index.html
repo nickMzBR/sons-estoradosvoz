@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Voz Humana Pro 10x</title>
+    <title>Mesa de Voz Humana Pro - Som Limpo</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -22,13 +22,13 @@
             background-color: #141522;
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(255, 0, 85, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 140, 255, 0.3);
             text-align: center;
             max-width: 480px;
             width: 100%;
             border: 1px solid #2a2c42;
         }
-        h2 { color: #ff0055; margin-top: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
+        h2 { color: #008cff; margin-top: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
         textarea {
             width: 100%;
             height: 110px;
@@ -42,7 +42,7 @@
             box-sizing: border-box;
             margin-bottom: 15px;
         }
-        textarea:focus { border-color: #ff0055; outline: none; }
+        textarea:focus { border-color: #008cff; outline: none; }
         
         .controles-painel {
             background: #0c0d14;
@@ -66,13 +66,13 @@
         }
         input[type="range"] {
             width: 100%;
-            accent-color: #ff0055;
+            accent-color: #008cff;
         }
         
         button {
             width: 100%;
             padding: 15px;
-            background-color: #ff0055;
+            background-color: #008cff;
             color: white;
             border: none;
             border-radius: 8px;
@@ -82,7 +82,7 @@
             transition: 0.1s;
             text-transform: uppercase;
         }
-        button:hover { background-color: #e6004c; }
+        button:hover { background-color: #0077d6; }
         button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
         
         .resultado {
@@ -91,47 +91,47 @@
             background-color: #1f1f2e;
             padding: 15px;
             border-radius: 8px;
-            border-left: 5px solid #ff0055;
+            border-left: 5px solid #008cff;
         }
         audio { width: 100%; margin-top: 10px; }
         .download-btn {
             display: block;
             margin-top: 15px;
-            color: #ff0055;
+            color: #008cff;
             text-decoration: none;
             font-weight: bold;
             font-size: 16px;
             padding: 10px;
-            border: 1px solid #ff0055;
+            border: 1px solid #008cff;
             border-radius: 5px;
         }
-        .download-btn:hover { background-color: #ff0055; color: white; }
+        .download-btn:hover { background-color: #008cff; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Mesa de Voz Humana 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Sistema Servidor Próprio anti-bloqueio para rimas longas.</p>
+    <h2>Mesa de Voz Humana Pro 🔊</h2>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Volume Máximo com Áudio Cristalino (Sem Estourar).</p>
     
     <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
 
     <div class="controles-painel">
         <div class="slider-group">
-            <label><span>Altitude / Tom da Voz:</span> <span id="val-altitude" style="color: #ff0055;">Normal (1.0x)</span></label>
+            <label><span>Altitude / Tom da Voz:</span> <span id="val-altitude" style="color: #008cff;">Normal (1.0x)</span></label>
             <input type="range" id="altitude" min="0.5" max="2.0" step="0.1" value="1.0" oninput="atualizarLabels()">
         </div>
 
         <div class="slider-group">
-            <label><span>Multiplicador de Estouro:</span> <span id="val-ganho" style="color: #ff0055;">10x</span></label>
-            <input type="range" id="ganho" min="1" max="25" step="1" value="10" oninput="document.getElementById('val-ganho').innerText = this.value + 'x'">
+            <label><span>Volume Limpo Máximo:</span> <span id="val-volume" style="color: #008cff;">100% (No Talo)</span></label>
+            <input type="range" id="volume" min="10" max="100" step="5" value="100" oninput="document.getElementById('val-volume').innerText = this.value + '%'">
         </div>
     </div>
 
-    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Modificado</button>
+    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Limpo</button>
 
     <div class="resultado" id="resultado">
-        <p style="color: #ff0055; margin-top: 0; font-weight: bold;">✅ Áudio Modificado Pronto</p>
+        <p style="color: #008cff; margin-top: 0; font-weight: bold;">✅ Áudio Masterizado Pronto</p>
         <audio id="player" controls></audio>
         <a id="linkDownload" class="download-btn" href="#">📥 Baixar Arquivo (.wav)</a>
     </div>
@@ -180,16 +180,31 @@ function dividirTextoEmPedaços(texto, limite = 120) {
     return pedacos;
 }
 
-function modificarEEstourarWav(buffer, multiplicador, altitude) {
+function modificarENormalizarWav(buffer, volumePercent, altitude) {
     const numChannels = buffer.numberOfChannels;
     const sampleRate = buffer.sampleRate;
     const novaTaxaAmostragem = Math.round(sampleRate * altitude);
     
+    // 1. Algoritmo de Normalização: Procura o maior pico absoluto do áudio original
+    let maiorPico = 0;
+    for (let channel = 0; channel < numChannels; channel++) {
+        const channelData = buffer.getChannelData(channel);
+        for (let i = 0; i < buffer.length; i++) {
+            const valorAbsoluto = Math.abs(channelData[i]);
+            if (valorAbsoluto > maiorPico) maiorPico = valorAbsoluto;
+        }
+    }
+
+    // Calcula o multiplicador perfeito para atingir 100% de volume sem distorcer (0dB)
+    const fatorNormalizacao = maiorPico > 0 ? (0.99 / maiorPico) : 1;
+    const ganhoFinal = fatorNormalizacao * (volumePercent / 100);
+
     const result = new Float32Array(buffer.length * numChannels);
     for (let channel = 0; channel < numChannels; channel++) {
         const channelData = buffer.getChannelData(channel);
         for (let i = 0; i < buffer.length; i++) {
-            result[i * numChannels + channel] = channelData[i] * multiplicador;
+            // Aplica o ganho limpo e seguro
+            result[i * numChannels + channel] = channelData[i] * ganhoFinal;
         }
     }
     
@@ -200,7 +215,6 @@ function modificarEEstourarWav(buffer, multiplicador, altitude) {
     view.setUint32(4, 36 + result.length * 2, true);
     view.setUint32(8, 0x57415645, false); 
     view.setUint32(12, 0x666d7420, false); 
-    view.setUint32(16, 16, true);
     view.setUint16(20, 1, true); 
     view.setUint16(22, numChannels, true);
     view.setUint32(24, novaTaxaAmostragem, true); 
@@ -232,7 +246,7 @@ async function gerarVozModificada() {
 
     const btn = document.getElementById('btn-gerar');
     btn.disabled = true;
-    btn.innerText = "Remixando Ondas...";
+    btn.innerText = "Ajustando Frequências...";
 
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -246,25 +260,27 @@ async function gerarVozModificada() {
         }
 
         const originalBuffer = concatenarAudioBuffers(audioCtx, listaBuffersDecodificados);
-        const multiplicador = parseFloat(document.getElementById('ganho').value);
+        
+        // Pega os novos parâmetros focados em volume limpo
+        const volumePercent = parseFloat(document.getElementById('volume').value);
         const altitude = parseFloat(document.getElementById('altitude').value);
         
-        const wavBlob = modificarEEstourarWav(originalBuffer, multiplicador, altitude);
+        const wavBlob = modificarENormalizarWav(originalBuffer, volumePercent, altitude);
         const url = URL.createObjectURL(wavBlob);
 
         const player = document.getElementById('player');
         player.src = url;
         document.getElementById('linkDownload').href = url;
-        document.getElementById('linkDownload').download = `rima_estourada_${multiplicador}x.wav`;
+        document.getElementById('linkDownload').download = "rima_perfeita_loud.wav";
         document.getElementById('resultado').style.display = 'block';
         player.play();
 
     } catch (e) {
-        alert("Erro ao processar as frequências.");
+        alert("Erro ao processar áudio.");
         console.error(e);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Gerar Áudio Modificado";
+        btn.innerText = "Gerar Áudio Limpo";
     }
 }
 </script>
