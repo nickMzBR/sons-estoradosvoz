@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Áudio Amplificado Máximo</title>
+    <title>sla</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -88,13 +88,13 @@
 <body>
 
 <div class="container">
-    <h2>Amplificador de Voz Puro 🔊</h2>
-    <p style="font-size: 14px; color: #aaa; margin-bottom: 20px;">Ganho bruto sem filtros. Multiplique o volume em até 10x o padrão.</p>
+    <h2>Amplificador de Voz Seguro 🔊</h2>
+    <p style="font-size: 14px; color: #aaa; margin-bottom: 20px;">Gere a voz com um controle de volume otimizado e seguro de até 10x o padrão.</p>
     
     <textarea id="texto" placeholder="Digite seu texto aqui..."></textarea>
 
     <div class="slider-container">
-        <label><span>Multiplicador de Volume:</span> <span id="val-ganho" style="color: #00ffcc;">2x</span></label>
+        <label><span>Multiplicador de Volume Limpo:</span> <span id="val-ganho" style="color: #00ffcc;">2x</span></label>
         <input type="range" id="ganho" min="1" max="10" step="1" value="2" oninput="document.getElementById('val-ganho').innerText = this.value + 'x'">
     </div>
 
@@ -168,7 +168,7 @@ async function gerarEDestruir() {
     document.getElementById('resultado').style.display = 'none';
 
     try {
-        // Usa a sua API interna do Vercel que não cai e não dá erro de proxy
+        // CORREÇÃO DA ROTA: Puxando direto da sua API do Vercel sem usar proxies públicos
         const urlAPI = `/api/tts?text=${encodeURIComponent(texto)}`;
         
         const response = await fetch(urlAPI);
@@ -191,9 +191,18 @@ async function gerarEDestruir() {
         const multiplicador = parseFloat(document.getElementById('ganho').value);
         gainNode.gain.value = multiplicador; 
 
-        // Conexão direta e bruta: Sem nenhum filtro ou compressor limitando a altura
+        // Adicionando um compressor/limiter dinâmico profissional para evitar que o áudio estoure
+        const limiter = offlineCtx.createDynamicsCompressor();
+        limiter.threshold.setValueAtTime(-1.0, offlineCtx.currentTime); // Ativa perto do limite máximo
+        limiter.knee.setValueAtTime(0.0, offlineCtx.currentTime);       // Curva firme (Hard Limiter)
+        limiter.ratio.setValueAtTime(20.0, offlineCtx.currentTime);     // Taxa de compressão máxima
+        limiter.attack.setValueAtTime(0.001, offlineCtx.currentTime);   // Resposta instantânea
+        limiter.release.setValueAtTime(0.05, offlineCtx.currentTime);   // Recuperação rápida
+
+        // Conexão dos nós: Fonte -> Ganho -> Limiter -> Destino
         source.connect(gainNode);
-        gainNode.connect(offlineCtx.destination);
+        gainNode.connect(limiter);
+        limiter.connect(offlineCtx.destination);
         source.start();
 
         const renderedBuffer = await offlineCtx.startRendering();
@@ -208,7 +217,7 @@ async function gerarEDestruir() {
         document.getElementById('resultado').style.display = 'block';
 
     } catch (e) {
-        alert("Não foi possível gerar a voz no momento. Verifique se enviou a pasta /api para o Vercel.");
+        alert("Não foi possível gerar a voz no momento. Verifique a API do seu Vercel.");
         console.error(e);
     } finally {
         btn.disabled = false;
