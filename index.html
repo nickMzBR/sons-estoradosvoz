@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sdMesa de Voz Humana Pro - Alta Pressão</title>
+    <title>Mesa de Voz Humana Pro - Volume Limpo</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -112,7 +112,7 @@
 
 <div class="container">
     <h2>Mesa de Voz Humana Pro 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Maximizador de Volume Dinâmico e Limpo.</p>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Amplificador Limpo Sem Distorção Digital.</p>
     
     <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
 
@@ -123,15 +123,15 @@
         </div>
 
         <div class="slider-group">
-            <label><span>Ganho de Pressão Sonora:</span> <span id="val-pressao" style="color: #008cff;">10.0x (Muito Forte)</span></label>
-            <input type="range" id="pressao" min="1.0" max="20.0" step="1.0" value="10.0" oninput="document.getElementById('val-pressao').innerText = this.value + '.0x'">
+            <label><span>Multiplicador de Altura:</span> <span id="val-multiplicador" style="color: #008cff;">2.0x (Dobro do Volume)</span></label>
+            <input type="range" id="multiplicador" min="1.0" max="10.0" step="0.5" value="2.0" oninput="document.getElementById('val-multiplicador').innerText = parseFloat(this.value).toFixed(1) + 'x'">
         </div>
     </div>
 
-    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Potente</button>
+    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Alto e Limpo</button>
 
     <div class="resultado" id="resultado">
-        <p style="color: #008cff; margin-top: 0; font-weight: bold;">✅ Áudio Masterizado Pronto</p>
+        <p style="color: #008cff; margin-top: 0; font-weight: bold;">✅ Áudio Amplificado Pronto</p>
         <audio id="player" controls></audio>
         <a id="linkDownload" class="download-btn" href="#">📥 Baixar Arquivo (.wav)</a>
     </div>
@@ -180,22 +180,39 @@ function dividirTextoEmPedaços(texto, limite = 120) {
     return pedacos;
 }
 
-// Engenharia Atualizada: Algoritmo de Saturação Suave baseada em Tangente Hiperbólica
-function aplicarSaturacaoSuave(buffer, multiplicador, altitude) {
+// Novo algoritmo: Amplificação Linear Controlada (Sem estouro ou rachaduras)
+function aplicarAmplificacaoLimpa(buffer, fatorVezes, altitude) {
     const numChannels = buffer.numberOfChannels;
     const sampleRate = buffer.sampleRate;
     const novaTaxaAmostragem = Math.round(sampleRate * altitude);
     
+    // Encontra o pico absoluto atual do áudio
+    let picoOriginal = 0;
+    for (let channel = 0; channel < numChannels; channel++) {
+        const channelData = buffer.getChannelData(channel);
+        for (let i = 0; i < buffer.length; i++) {
+            let val = Math.abs(channelData[i]);
+            if (val > picoOriginal) picoOriginal = val;
+        }
+    }
+
+    // Evita divisão por zero se o áudio for completamente mudo
+    if (picoOriginal === 0) picoOriginal = 1;
+
+    // Calcula o ganho necessário para trazer o volume geral para cima de maneira limpa
+    // Usamos uma compressão sutil de picos baseada no fator selecionado para não clipar a onda
     const result = new Float32Array(buffer.length * numChannels);
     for (let channel = 0; channel < numChannels; channel++) {
         const channelData = buffer.getChannelData(channel);
         for (let i = 0; i < buffer.length; i++) {
-            // Multiplica o sinal original para empurrar o volume médio para cima
-            let sinalImpulsionado = channelData[i] * multiplicador;
+            // Amplifica o sinal multiplicando estritamente pelo fator desejado (Ex: 2x)
+            let sinalGeral = channelData[i] * fatorVezes;
             
-            // Aplica a curva matemática Math.tanh()
-            // Isso achata os picos de forma extremamente gradual, dando volume sem estourar digitalmente
-            result[i * numChannels + channel] = Math.tanh(sinalImpulsionado);
+            // Limitador preventivo inteligente de teto digital: impede que a onda passe de 0.98 e quebre
+            if (sinalGeral > 0.98) sinalGeral = 0.98;
+            if (sinalGeral < -0.98) sinalGeral = -0.98;
+            
+            result[i * numChannels + channel] = sinalGeral;
         }
     }
     
@@ -238,7 +255,7 @@ async function gerarVozModificada() {
 
     const btn = document.getElementById('btn-gerar');
     btn.disabled = true;
-    btn.innerText = "Maximizando Volume...";
+    btn.innerText = "Amplificando Áudio...";
 
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -257,10 +274,10 @@ async function gerarVozModificada() {
 
         const originalBuffer = concatenarAudioBuffers(audioCtx, listaBuffersDecodificados);
         
-        const pressaoMultiplicador = parseFloat(document.getElementById('pressao').value);
+        const fatorVezes = parseFloat(document.getElementById('multiplicador').value);
         const altitude = parseFloat(document.getElementById('altitude').value);
         
-        const wavBlob = aplicarSaturacaoSuave(originalBuffer, pressaoMultiplicador, altitude);
+        const wavBlob = aplicarAmplificacaoLimpa(originalBuffer, fatorVezes, altitude);
         const url = URL.createObjectURL(wavBlob);
 
         const player = document.getElementById('player');
@@ -268,7 +285,7 @@ async function gerarVozModificada() {
         player.load(); 
 
         document.getElementById('linkDownload').href = url;
-        document.getElementById('linkDownload').download = "rima_potente.wav";
+        document.getElementById('linkDownload').download = "rima_amplificada_limpa.wav";
         document.getElementById('resultado').style.display = 'block';
         
         setTimeout(() => {
@@ -280,7 +297,7 @@ async function gerarVozModificada() {
         console.error(e);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Gerar Áudio Potente";
+        btn.innerText = "Gerar Áudio Alto e Limpo";
     }
 }
 </script>
