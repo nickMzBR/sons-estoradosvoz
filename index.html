@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Voz Humana Pro - Volume Limpo</title>
+    <title>Mesa de Voz Humana Pro 10x</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -22,13 +22,13 @@
             background-color: #141522;
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 140, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(255, 0, 85, 0.3);
             text-align: center;
             max-width: 480px;
             width: 100%;
             border: 1px solid #2a2c42;
         }
-        h2 { color: #008cff; margin-top: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
+        h2 { color: #ff0055; margin-top: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
         textarea {
             width: 100%;
             height: 110px;
@@ -42,7 +42,7 @@
             box-sizing: border-box;
             margin-bottom: 15px;
         }
-        textarea:focus { border-color: #008cff; outline: none; }
+        textarea:focus { border-color: #ff0055; outline: none; }
         
         .controles-painel {
             background: #0c0d14;
@@ -66,13 +66,13 @@
         }
         input[type="range"] {
             width: 100%;
-            accent-color: #008cff;
+            accent-color: #ff0055;
         }
         
         button {
             width: 100%;
             padding: 15px;
-            background-color: #008cff;
+            background-color: #ff0055;
             color: white;
             border: none;
             border-radius: 8px;
@@ -82,7 +82,7 @@
             transition: 0.1s;
             text-transform: uppercase;
         }
-        button:hover { background-color: #0077d6; }
+        button:hover { background-color: #e6004c; }
         button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
         
         .resultado {
@@ -91,47 +91,47 @@
             background-color: #1f1f2e;
             padding: 15px;
             border-radius: 8px;
-            border-left: 5px solid #008cff;
+            border-left: 5px solid #ff0055;
         }
         audio { width: 100%; margin-top: 10px; }
         .download-btn {
             display: block;
             margin-top: 15px;
-            color: #008cff;
+            color: #ff0055;
             text-decoration: none;
             font-weight: bold;
             font-size: 16px;
             padding: 10px;
-            border: 1px solid #008cff;
+            border: 1px solid #ff0055;
             border-radius: 5px;
         }
-        .download-btn:hover { background-color: #008cff; color: white; }
+        .download-btn:hover { background-color: #ff0055; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Mesa de Voz Humana Pro 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Amplificador Limpo Sem Distorção Digital.</p>
+    <h2>Mesa de Voz Humana 🔊</h2>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Sistema Anti-Bloqueio Integrado com Vercel.</p>
     
     <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
 
     <div class="controles-painel">
         <div class="slider-group">
-            <label><span>Altitude / Tom da Voz:</span> <span id="val-altitude" style="color: #008cff;">Normal (1.0x)</span></label>
+            <label><span>Altitude / Tom da Voz:</span> <span id="val-altitude" style="color: #ff0055;">Normal (1.0x)</span></label>
             <input type="range" id="altitude" min="0.5" max="2.0" step="0.1" value="1.0" oninput="atualizarLabels()">
         </div>
 
         <div class="slider-group">
-            <label><span>Multiplicador de Altura:</span> <span id="val-multiplicador" style="color: #008cff;">2.0x (Dobro do Volume)</span></label>
-            <input type="range" id="multiplicador" min="1.0" max="10.0" step="0.5" value="2.0" oninput="document.getElementById('val-multiplicador').innerText = parseFloat(this.value).toFixed(1) + 'x'">
+            <label><span>Multiplicador de Altura:</span> <span id="val-ganho" style="color: #ff0055;">2x</span></label>
+            <input type="range" id="ganho" min="1" max="10" step="1" value="2" oninput="document.getElementById('val-ganho').innerText = this.value + 'x'">
         </div>
     </div>
 
-    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Alto e Limpo</button>
+    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Modificado</button>
 
     <div class="resultado" id="resultado">
-        <p style="color: #008cff; margin-top: 0; font-weight: bold;">✅ Áudio Amplificado Pronto</p>
+        <p style="color: #ff0055; margin-top: 0; font-weight: bold;">✅ Áudio Modificado Pronto</p>
         <audio id="player" controls></audio>
         <a id="linkDownload" class="download-btn" href="#">📥 Baixar Arquivo (.wav)</a>
     </div>
@@ -146,13 +146,16 @@ function atualizarLabels() {
     document.getElementById('val-altitude').innerText = `${txtAlt} (${alt}x)`;
 }
 
+// Junta vários pedaços de áudio decodificados em um único bloco de memória continuo
 function concatenarAudioBuffers(audioCtx, listaBuffers) {
     if (listaBuffers.length === 0) return null;
+    
     let canais = listaBuffers[0].numberOfChannels;
     let taxaAmostragem = listaBuffers[0].sampleRate;
     let tamanhoTotal = listaBuffers.reduce((acc, buf) => acc + buf.length, 0);
     
     let bufferFinal = audioCtx.createBuffer(canais, tamanhoTotal, taxaAmostragem);
+    
     for (let canal = 0; canal < canais; canal++) {
         let posicaoAtual = 0;
         for (let buf of listaBuffers) {
@@ -163,6 +166,7 @@ function concatenarAudioBuffers(audioCtx, listaBuffers) {
     return bufferFinal;
 }
 
+// Quebra o texto inteligentemente em blocos menores para contornar o limite do Google
 function dividirTextoEmPedaços(texto, limite = 120) {
     let frases = texto.match(/[^,.\n!?]+[,.\n!?]*/g) || [texto];
     let pedacos = [];
@@ -180,39 +184,16 @@ function dividirTextoEmPedaços(texto, limite = 120) {
     return pedacos;
 }
 
-// Novo algoritmo: Amplificação Linear Controlada (Sem estouro ou rachaduras)
-function aplicarAmplificacaoLimpa(buffer, fatorVezes, altitude) {
+function modificarEEstourarWav(buffer, multiplicador, altitude) {
     const numChannels = buffer.numberOfChannels;
     const sampleRate = buffer.sampleRate;
     const novaTaxaAmostragem = Math.round(sampleRate * altitude);
     
-    // Encontra o pico absoluto atual do áudio
-    let picoOriginal = 0;
-    for (let channel = 0; channel < numChannels; channel++) {
-        const channelData = buffer.getChannelData(channel);
-        for (let i = 0; i < buffer.length; i++) {
-            let val = Math.abs(channelData[i]);
-            if (val > picoOriginal) picoOriginal = val;
-        }
-    }
-
-    // Evita divisão por zero se o áudio for completamente mudo
-    if (picoOriginal === 0) picoOriginal = 1;
-
-    // Calcula o ganho necessário para trazer o volume geral para cima de maneira limpa
-    // Usamos uma compressão sutil de picos baseada no fator selecionado para não clipar a onda
     const result = new Float32Array(buffer.length * numChannels);
     for (let channel = 0; channel < numChannels; channel++) {
         const channelData = buffer.getChannelData(channel);
         for (let i = 0; i < buffer.length; i++) {
-            // Amplifica o sinal multiplicando estritamente pelo fator desejado (Ex: 2x)
-            let sinalGeral = channelData[i] * fatorVezes;
-            
-            // Limitador preventivo inteligente de teto digital: impede que a onda passe de 0.98 e quebre
-            if (sinalGeral > 0.98) sinalGeral = 0.98;
-            if (sinalGeral < -0.98) sinalGeral = -0.98;
-            
-            result[i * numChannels + channel] = sinalGeral;
+            result[i * numChannels + channel] = channelData[i] * multiplicador;
         }
     }
     
@@ -223,8 +204,8 @@ function aplicarAmplificacaoLimpa(buffer, fatorVezes, altitude) {
     view.setUint32(4, 36 + result.length * 2, true);
     view.setUint32(8, 0x57415645, false); 
     view.setUint32(12, 0x666d7420, false); 
-    view.setUint32(16, 16, true);          
-    view.setUint16(20, 1, true);          
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); 
     view.setUint16(22, numChannels, true);
     view.setUint32(24, novaTaxaAmostragem, true); 
     view.setUint32(28, novaTaxaAmostragem * numChannels * 2, true);
@@ -235,17 +216,18 @@ function aplicarAmplificacaoLimpa(buffer, fatorVezes, altitude) {
     
     let offset = 44;
     for (let i = 0; i < result.length; i++) {
-        let sample = result[i];
+        let sample = Math.max(-1, Math.min(1, result[i]));
         view.setInt16(offset, sample < 0 ? sample * 32768 : sample * 32767, true);
         offset += 2;
     }
     return new Blob([view], { type: 'audio/wav' });
 }
 
+// O SEGREDO AQUI: Usar a sua própria API do Vercel em vez dos Proxies falhos
 async function baixarAudioPedaço(textoPedaço) {
     const url = `/api/tts?text=${encodeURIComponent(textoPedaço)}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Falha na API");
+    if (!res.ok) throw new Error("Falha na API do Vercel");
     return await res.arrayBuffer();
 }
 
@@ -255,49 +237,48 @@ async function gerarVozModificada() {
 
     const btn = document.getElementById('btn-gerar');
     btn.disabled = true;
-    btn.innerText = "Amplificando Áudio...";
+    btn.innerText = "Remixando Ondas...";
 
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') {
-            await audioCtx.resume();
-        }
-
+        
+        // Divide o textão em fatias seguras
         const pedacosTexto = dividirTextoEmPedaços(textoCompleto);
         const listaBuffersDecodificados = [];
 
+        // Baixa e decodifica cada bloco de texto um por um
         for (let pedaco of pedacosTexto) {
             const arrayBuffer = await baixarAudioPedaço(pedaco);
             const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
             listaBuffersDecodificados.push(decodedBuffer);
         }
 
+        // Funde todas as fatias em uma única track humana contínua
         const originalBuffer = concatenarAudioBuffers(audioCtx, listaBuffersDecodificados);
         
-        const fatorVezes = parseFloat(document.getElementById('multiplicador').value);
+        const multiplicador = parseFloat(document.getElementById('ganho').value);
         const altitude = parseFloat(document.getElementById('altitude').value);
         
-        const wavBlob = aplicarAmplificacaoLimpa(originalBuffer, fatorVezes, altitude);
+        const wavBlob = modificarEEstourarWav(originalBuffer, multiplicador, altitude);
         const url = URL.createObjectURL(wavBlob);
 
         const player = document.getElementById('player');
         player.src = url;
-        player.load(); 
-
         document.getElementById('linkDownload').href = url;
-        document.getElementById('linkDownload').download = "rima_amplificada_limpa.wav";
+        document.getElementById('linkDownload').download = `rima_amplificada_${multiplicador}x.wav`;
         document.getElementById('resultado').style.display = 'block';
         
+        // Toca o áudio de forma segura para o navegador não bloquear
         setTimeout(() => {
             player.play().catch(e => console.log("Aguardando play manual."));
         }, 50);
 
     } catch (e) {
-        alert("Erro ao processar áudio.");
+        alert("Erro ao processar. Tente novamente.");
         console.error(e);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Gerar Áudio Alto e Limpo";
+        btn.innerText = "Gerar Áudio Modificado";
     }
 }
 </script>
