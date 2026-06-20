@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Voz Humana Pro - Som Limpo</title>
+    <title>sdMesa de Voz Humana Pro - Alta Pressão</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -112,7 +112,7 @@
 
 <div class="container">
     <h2>Mesa de Voz Humana Pro 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Volume Máximo com Áudio Cristalino (Sem Estourar).</p>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Maximizador de Volume Dinâmico e Limpo.</p>
     
     <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
 
@@ -123,12 +123,12 @@
         </div>
 
         <div class="slider-group">
-            <label><span>Volume Limpo Máximo:</span> <span id="val-volume" style="color: #008cff;">100% (No Talo)</span></label>
-            <input type="range" id="volume" min="10" max="100" step="5" value="100" oninput="document.getElementById('val-volume').innerText = this.value + '%'">
+            <label><span>Ganho de Pressão Sonora:</span> <span id="val-pressao" style="color: #008cff;">10.0x (Muito Forte)</span></label>
+            <input type="range" id="pressao" min="1.0" max="20.0" step="1.0" value="10.0" oninput="document.getElementById('val-pressao').innerText = this.value + '.0x'">
         </div>
     </div>
 
-    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Limpo</button>
+    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Potente</button>
 
     <div class="resultado" id="resultado">
         <p style="color: #008cff; margin-top: 0; font-weight: bold;">✅ Áudio Masterizado Pronto</p>
@@ -180,51 +180,45 @@ function dividirTextoEmPedaços(texto, limite = 120) {
     return pedacos;
 }
 
-function modificarENormalizarWav(buffer, volumePercent, altitude) {
+// Engenharia Atualizada: Algoritmo de Saturação Suave baseada em Tangente Hiperbólica
+function aplicarSaturacaoSuave(buffer, multiplicador, altitude) {
     const numChannels = buffer.numberOfChannels;
     const sampleRate = buffer.sampleRate;
     const novaTaxaAmostragem = Math.round(sampleRate * altitude);
     
-    let maiorPico = 0;
-    for (let channel = 0; channel < numChannels; channel++) {
-        const channelData = buffer.getChannelData(channel);
-        for (let i = 0; i < buffer.length; i++) {
-            const valorAbsoluto = Math.abs(channelData[i]);
-            if (valorAbsoluto > maiorPico) maiorPico = valorAbsoluto;
-        }
-    }
-
-    const fatorNormalizacao = maiorPico > 0 ? (0.99 / maiorPico) : 1;
-    const ganhoFinal = fatorNormalizacao * (volumePercent / 100);
-
     const result = new Float32Array(buffer.length * numChannels);
     for (let channel = 0; channel < numChannels; channel++) {
         const channelData = buffer.getChannelData(channel);
         for (let i = 0; i < buffer.length; i++) {
-            result[i * numChannels + channel] = channelData[i] * ganhoFinal;
+            // Multiplica o sinal original para empurrar o volume médio para cima
+            let sinalImpulsionado = channelData[i] * multiplicador;
+            
+            // Aplica a curva matemática Math.tanh()
+            // Isso achata os picos de forma extremamente gradual, dando volume sem estourar digitalmente
+            result[i * numChannels + channel] = Math.tanh(sinalImpulsionado);
         }
     }
     
     const arrayBuffer = new ArrayBuffer(44 + result.length * 2);
     const view = new DataView(arrayBuffer);
     
-    view.setUint32(0, 0x52494646, false); // RIFF
+    view.setUint32(0, 0x52494646, false); 
     view.setUint32(4, 36 + result.length * 2, true);
-    view.setUint32(8, 0x57415645, false); // WAVE
-    view.setUint32(12, 0x666d7420, false); // fmt 
+    view.setUint32(8, 0x57415645, false); 
+    view.setUint32(12, 0x666d7420, false); 
     view.setUint32(16, 16, true);          
-    view.setUint16(20, 1, true);          // PCM
+    view.setUint16(20, 1, true);          
     view.setUint16(22, numChannels, true);
     view.setUint32(24, novaTaxaAmostragem, true); 
     view.setUint32(28, novaTaxaAmostragem * numChannels * 2, true);
     view.setUint16(32, numChannels * 2, true);
     view.setUint16(34, 16, true);
-    view.setUint32(36, 0x64617461, false); // data
+    view.setUint32(36, 0x64617461, false); 
     view.setUint32(40, result.length * 2, true);
     
     let offset = 44;
     for (let i = 0; i < result.length; i++) {
-        let sample = Math.max(-1, Math.min(1, result[i]));
+        let sample = result[i];
         view.setInt16(offset, sample < 0 ? sample * 32768 : sample * 32767, true);
         offset += 2;
     }
@@ -244,10 +238,9 @@ async function gerarVozModificada() {
 
     const btn = document.getElementById('btn-gerar');
     btn.disabled = true;
-    btn.innerText = "Ajustando Frequências...";
+    btn.innerText = "Maximizando Volume...";
 
     try {
-        // CORREÇÃO: Inicializa e ativa o AudioContext IMEDIATAMENTE com o clique do botão
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') {
             await audioCtx.resume();
@@ -264,31 +257,30 @@ async function gerarVozModificada() {
 
         const originalBuffer = concatenarAudioBuffers(audioCtx, listaBuffersDecodificados);
         
-        const volumePercent = parseFloat(document.getElementById('volume').value);
+        const pressaoMultiplicador = parseFloat(document.getElementById('pressao').value);
         const altitude = parseFloat(document.getElementById('altitude').value);
         
-        const wavBlob = modificarENormalizarWav(originalBuffer, volumePercent, altitude);
+        const wavBlob = aplicarSaturacaoSuave(originalBuffer, pressaoMultiplicador, altitude);
         const url = URL.createObjectURL(wavBlob);
 
         const player = document.getElementById('player');
         player.src = url;
-        player.load(); // Força o recarregamento do player com o novo arquivo válido
+        player.load(); 
 
         document.getElementById('linkDownload').href = url;
-        document.getElementById('linkDownload').download = "rima_perfeita_loud.wav";
+        document.getElementById('linkDownload').download = "rima_potente.wav";
         document.getElementById('resultado').style.display = 'block';
         
-        // Toca de forma segura pós-interação do usuário
         setTimeout(() => {
-            player.play().catch(e => console.log("O player aguarda o clique manual de play."));
+            player.play().catch(e => console.log("Aguardando play manual."));
         }, 50);
 
     } catch (e) {
-        alert("Erro ao decodificar ou processar o áudio.");
+        alert("Erro ao processar áudio.");
         console.error(e);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Gerar Áudio Limpo";
+        btn.innerText = "Gerar Áudio Potente";
     }
 }
 </script>
