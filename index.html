@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Voz Humana Pro - Som Limpo</title>
+    <title>Mesa de Voz Humana Pro - 100x Limpo</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -22,7 +22,7 @@
             background-color: #141522;
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 255, 200, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 255, 200, 0.3);
             text-align: center;
             max-width: 480px;
             width: 100%;
@@ -112,7 +112,7 @@
 
 <div class="container">
     <h2>Mesa de Voz Humana 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Filtro Limitador Anti-Estouro Ativado (Vercel Ready).</p>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Filtro Limitador Ativo • Ganho Máximo Expandido para 100x.</p>
     
     <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
 
@@ -123,15 +123,15 @@
         </div>
 
         <div class="slider-group">
-            <label><span>Ganho de Volume Protegido:</span> <span id="val-ganho" style="color: #00ffcc;">5x</span></label>
-            <input type="range" id="ganho" min="1" max="15" step="1" value="5" oninput="document.getElementById('val-ganho').innerText = this.value + 'x'">
+            <label><span>Ganho Ultra Protegido:</span> <span id="val-ganho" style="color: #00ffcc;">10x</span></label>
+            <input type="range" id="ganho" min="1" max="100" step="1" value="10" oninput="document.getElementById('val-ganho').innerText = this.value + 'x'">
         </div>
     </div>
 
-    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Otimizado</button>
+    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Ultra Amplificado</button>
 
     <div class="resultado" id="resultado">
-        <p style="color: #00ffcc; margin-top: 0; font-weight: bold;">✅ Áudio Processado sem Distorção</p>
+        <p style="color: #00ffcc; margin-top: 0; font-weight: bold;">✅ Áudio Processado no Limite Seguro</p>
         <audio id="player" controls></audio>
         <a id="linkDownload" class="download-btn" href="#">📥 Baixar Arquivo (.wav)</a>
     </div>
@@ -179,7 +179,6 @@ function dividirTextoEmPedaços(texto, limite = 120) {
     return pedacos;
 }
 
-// Converte o resultado final renderizado para WAV de forma limpa
 function bufferToWav(buffer, altitude) {
     const numChannels = buffer.numberOfChannels;
     const sampleRate = buffer.sampleRate;
@@ -222,7 +221,7 @@ function bufferToWav(buffer, altitude) {
 async function baixarAudioPedaço(textoPedaço) {
     const url = `/api/tts?text=${encodeURIComponent(textoPedaço)}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Falha no download via API do Vercel.");
+    if (!res.ok) throw new Error("Falha no download via API.");
     return await res.arrayBuffer();
 }
 
@@ -232,7 +231,7 @@ async function gerarVozModificada() {
 
     const btn = document.getElementById('btn-gerar');
     btn.disabled = true;
-    btn.innerText = "Processando Áudio...";
+    btn.innerText = "Maximizando Volume...";
 
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -247,7 +246,6 @@ async function gerarVozModificada() {
 
         const originalBuffer = concatenarAudioBuffers(audioCtx, listaBuffersDecodificados);
         
-        // Criação do contexto offline para aplicar os filtros antes de gerar o arquivo
         const offlineCtx = new OfflineAudioContext(
             originalBuffer.numberOfChannels,
             originalBuffer.length,
@@ -257,28 +255,24 @@ async function gerarVozModificada() {
         const source = offlineCtx.createBufferSource();
         source.buffer = originalBuffer;
 
-        // 1. Aplica o Ganho (Volume desejado)
         const gainNode = offlineCtx.createGain();
         const multiplicador = parseFloat(document.getElementById('ganho').value);
         gainNode.gain.value = multiplicador;
 
-        // 2. FILTRO ANTI-ESTOURO (Brickwall Limiter)
-        // Impede que as ondas ultrapassem o limite digital e quebrem o som
+        // Filtro compressor configurado para agir como um limitador rígido (Brickwall Limiter)
         const limiter = offlineCtx.createDynamicsCompressor();
-        limiter.threshold.setValueAtTime(-0.5, offlineCtx.currentTime); // Segura o som logo abaixo do teto máximo
-        limiter.knee.setValueAtTime(0.0, offlineCtx.currentTime);       // Curva dura para funcionar como limiter real
-        limiter.ratio.setValueAtTime(20.0, offlineCtx.currentTime);     // Compressão extrema para achatar picos perigosos
-        limiter.attack.setValueAtTime(0.001, offlineCtx.currentTime);   // Ativa instantaneamente
-        limiter.release.setValueAtTime(0.05, offlineCtx.currentTime);   // Recuperação rápida para não abafar a voz
+        limiter.threshold.setValueAtTime(-0.3, offlineCtx.currentTime); 
+        limiter.knee.setValueAtTime(0.0, offlineCtx.currentTime);       
+        limiter.ratio.setValueAtTime(20.0, offlineCtx.currentTime);     
+        limiter.attack.setValueAtTime(0.001, offlineCtx.currentTime);   
+        limiter.release.setValueAtTime(0.06, offlineCtx.currentTime);   
 
-        // Liga as conexões: Som Original -> Ganho Alto -> Filtro Anti-Estouro -> Saída Final
         source.connect(gainNode);
         gainNode.connect(limiter);
         limiter.connect(offlineCtx.destination);
         
         source.start();
 
-        // Renderiza o áudio já processado e protegido pelo filtro
         const renderedBuffer = await offlineCtx.startRendering();
         
         const altitude = parseFloat(document.getElementById('altitude').value);
@@ -288,16 +282,16 @@ async function gerarVozModificada() {
         const player = document.getElementById('player');
         player.src = url;
         document.getElementById('linkDownload').href = url;
-        document.getElementById('linkDownload').download = `audio_limpo_${multiplicador}x.wav`;
+        document.getElementById('linkDownload').download = `audio_max_${multiplicador}x.wav`;
         document.getElementById('resultado').style.display = 'block';
         player.play();
 
     } catch (e) {
-        alert("Erro ao processar. Tente clicar novamente.");
+        alert("Erro ao processar o áudio.");
         console.error(e);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Gerar Áudio Otimizado";
+        btn.innerText = "Gerar Áudio Ultra Amplificado";
     }
 }
 </script>
