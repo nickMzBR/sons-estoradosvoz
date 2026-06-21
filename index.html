@@ -15,7 +15,300 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
+            padding: 20px;<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesa de Voz Humana Pro - Modo Destruição</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0c0d14;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #141522;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(255, 51, 51, 0.4);
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            border: 1px solid #3a1f24;
+        }
+        h2 { color: #ff3333; margin-top: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
+        textarea {
+            width: 100%;
+            height: 110px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #444;
+            background-color: #0c0d14;
+            color: #00ffcc;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+        textarea:focus { border-color: #ff3333; outline: none; }
+        
+        .controles-painel {
+            background: #0c0d14;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2c42;
+        }
+        .slider-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .slider-group:last-child { margin-bottom: 0; }
+        .slider-group label {
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            color: #888ca0;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #ff3333;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #ff3333;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.1s;
+            text-transform: uppercase;
+        }
+        button:hover { background-color: #cc0000; }
+        button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
+        
+        .resultado {
+            margin-top: 20px;
+            display: none;
+            background-color: #1f1f2e;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #ffaa00;
+        }
+        audio { width: 100%; margin-top: 10px; }
+        .download-btn {
+            display: block;
+            margin-top: 15px;
+            color: #ffaa00;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 10px;
+            border: 1px solid #ffaa00;
+            border-radius: 5px;
+        }
+        .download-btn:hover { background-color: #ffaa00; color: #121212; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Mesa de Voz Humana ☢️</h2>
+    <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Amplificação por Onda Quadrada. Volume Máximo Ilusório Ativo.</p>
+    
+    <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
+
+    <div class="controles-painel">
+        <div class="slider-group">
+            <label><span>Altitude / Tom da Voz:</span> <span id="val-altitude" style="color: #ff3333;">Normal (1.0x)</span></label>
+            <input type="range" id="altitude" min="0.5" max="2.0" step="0.1" value="1.0" oninput="atualizarLabels()">
+        </div>
+
+        <div class="slider-group">
+            <label><span>Nível de Ganho Bruto:</span> <span id="val-ganho" style="color: #ff3333;">100x</span></label>
+            <input type="range" id="ganho" min="1" max="1000" step="10" value="100" oninput="document.getElementById('val-ganho').innerText = this.value + 'x'">
+        </div>
+    </div>
+
+    <button id="btn-gerar" onclick="gerarVozModificada()">Criar Áudio Potência Máxima</button>
+
+    <div class="resultado" id="resultado">
+        <p style="color: #ffaa00; margin-top: 0; font-weight: bold;">⚠️ CUIDADO COM OS OUVIDOS!</p>
+        <audio id="player" controls></audio>
+        <a id="linkDownload" class="download-btn" href="#">📥 Baixar Arquivo (.wav)</a>
+    </div>
+</div>
+
+<script>
+function atualizarLabels() {
+    const alt = parseFloat(document.getElementById('altitude').value);
+    let txtAlt = "Normal";
+    if (alt < 0.9) txtAlt = "Grave (Monstro) 👹";
+    else if (alt > 1.2) txtAlt = "Agudo (Esquilo) 🐿️";
+    document.getElementById('val-altitude').innerText = `${txtAlt} (${alt}x)`;
+}
+
+function concatenarAudioBuffers(audioCtx, listaBuffers) {
+    if (listaBuffers.length === 0) return null;
+    let canais = listaBuffers[0].numberOfChannels;
+    let taxaAmostragem = listaBuffers[0].sampleRate;
+    let tamanhoTotal = listaBuffers.reduce((acc, buf) => acc + buf.length, 0);
+    
+    let bufferFinal = audioCtx.createBuffer(canais, tamanhoTotal, taxaAmostragem);
+    for (let canal = 0; canal < canais; canal++) {
+        let posicaoAtual = 0;
+        for (let buf of listaBuffers) {
+            bufferFinal.copyToChannel(buf.getChannelData(canal), canal, posicaoAtual);
+            posicaoAtual += buf.length;
+        }
+    }
+    return bufferFinal;
+}
+
+function dividirTextoEmPedaços(texto, limite = 120) {
+    let frases = texto.match(/[^,.\n!?]+[,.\n!?]*/g) || [texto];
+    let pedacos = [];
+    let atual = "";
+    for (let frase of frases) {
+        if ((atual + frase).length > limite) {
+            if (atual.trim()) pedacos.push(atual.trim());
+            atual = frase;
+        } else {
+            atual += frase;
+        }
+    }
+    if (atual.trim()) pedacos.push(atual.trim());
+    return pedacos;
+}
+
+// O conversor matemático raiz: força a onda quadrada limitando os bytes no arquivo final
+function bufferToWav(buffer, altitude) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const novaTaxaAmostragem = Math.round(sampleRate * altitude);
+    
+    const result = new Float32Array(buffer.length * numChannels);
+    for (let channel = 0; channel < numChannels; channel++) {
+        const channelData = buffer.getChannelData(channel);
+        for (let i = 0; i < buffer.length; i++) {
+            result[i * numChannels + channel] = channelData[i];
+        }
+    }
+    
+    const arrayBuffer = new ArrayBuffer(44 + result.length * 2);
+    const view = new DataView(arrayBuffer);
+    
+    view.setUint32(0, 0x52494646, false); 
+    view.setUint32(4, 36 + result.length * 2, true);
+    view.setUint32(8, 0x57415645, false); 
+    view.setUint32(12, 0x666d7420, false); 
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); 
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, novaTaxaAmostragem, true); 
+    view.setUint32(28, novaTaxaAmostragem * numChannels * 2, true);
+    view.setUint16(32, numChannels * 2, true);
+    view.setUint16(34, 16, true);
+    view.setUint32(36, 0x64617461, false); 
+    view.setUint32(40, result.length * 2, true);
+    
+    let offset = 44;
+    for (let i = 0; i < result.length; i++) {
+        // ESSA É A MÁGICA: Corta o excesso gerando onda quadrada e pressão sonora máxima
+        let sample = Math.max(-1, Math.min(1, result[i]));
+        view.setInt16(offset, sample < 0 ? sample * 32768 : sample * 32767, true);
+        offset += 2;
+    }
+    return new Blob([view], { type: 'audio/wav' });
+}
+
+async function baixarAudioPedaço(textoPedaço) {
+    const url = `/api/tts?text=${encodeURIComponent(textoPedaço)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Falha no download via API.");
+    return await res.arrayBuffer();
+}
+
+async function gerarVozModificada() {
+    const textoCompleto = document.getElementById('texto').value.trim();
+    if (!textoCompleto) return alert("Escreva algo primeiro!");
+
+    const btn = document.getElementById('btn-gerar');
+    btn.disabled = true;
+    btn.innerText = "Forçando Ganho Bruto...";
+
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const pedacosTexto = dividirTextoEmPedaços(textoCompleto);
+        const listaBuffersDecodificados = [];
+
+        for (let pedaco of pedacosTexto) {
+            const arrayBuffer = await baixarAudioPedaço(pedaco);
+            const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            listaBuffersDecodificados.push(decodedBuffer);
+        }
+
+        const originalBuffer = concatenarAudioBuffers(audioCtx, listaBuffersDecodificados);
+        
+        const offlineCtx = new OfflineAudioContext(
+            originalBuffer.numberOfChannels,
+            originalBuffer.length,
+            originalBuffer.sampleRate
+        );
+
+        const source = offlineCtx.createBufferSource();
+        source.buffer = originalBuffer;
+
+        // Sem compressores, sem travas. Multiplicação direta na linha de áudio.
+        const gainNode = offlineCtx.createGain();
+        const multiplicador = parseFloat(document.getElementById('ganho').value);
+        gainNode.gain.value = multiplicador;
+
+        source.connect(gainNode);
+        gainNode.connect(offlineCtx.destination);
+        
+        source.start();
+
+        const renderedBuffer = await offlineCtx.startRendering();
+        
+        const altitude = parseFloat(document.getElementById('altitude').value);
+        const wavBlob = bufferToWav(renderedBuffer, altitude);
+        const url = URL.createObjectURL(wavBlob);
+
+        const player = document.getElementById('player');
+        player.src = url;
+        document.getElementById('linkDownload').href = url;
+        document.getElementById('linkDownload').download = `audio_quadrado_${multiplicador}x.wav`;
+        document.getElementById('resultado').style.display = 'block';
+        player.play();
+
+    } catch (e) {
+        alert("Erro ao processar o áudio.");
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Criar Áudio Potência Máxima";
+    }
+}
+</script>
+</body>
+</html>
             box-sizing: border-box;
         }
         .container {
