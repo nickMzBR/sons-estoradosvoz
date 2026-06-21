@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Voz Humana Pro - Volume Máximo Limpo</title>
+    <meta name="viewport" content="widtLimpoh=device-width, initial-scale=1.0">
+    <title>BGVoices</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -111,10 +111,10 @@
 <body>
 
 <div class="container">
-    <h2>Mesa de Voz Humana 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Filtro Limitador Anti-Estouro Ativado • Escala Real até 10x.</p>
+    <h2>BGVoices</h2>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Aumentador de som</p>
     
-    <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
+    <textarea id="texto" placeholder="Digite seu texto"></textarea>
 
     <div class="controles-painel">
         <div class="slider-group">
@@ -123,15 +123,15 @@
         </div>
 
         <div class="slider-group">
-            <label><span>Ganho Protegido (Max 10x):</span> <span id="val-ganho" style="color: #00ffcc;">5x</span></label>
+            <label><span>Ganho De som (Max 10x):</span> <span id="val-ganho" style="color: #00ffcc;">5x</span></label>
             <input type="range" id="ganho" min="1" max="100" step="1" value="50" oninput="atualizarLabelGanho(this.value)">
         </div>
     </div>
 
-    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Otimizado</button>
+    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio</button>
 
     <div class="resultado" id="resultado">
-        <p style="color: #00ffcc; margin-top: 0; font-weight: bold;">✅ Áudio Processado no Limite Perfeito</p>
+        <p style="color: #00ffcc; margin-top: 0; font-weight: bold;">✅ Áudio Processado</p>
         <audio id="player" controls></audio>
         <a id="linkDownload" class="download-btn" href="#">📥 Baixar Arquivo (.wav)</a>
     </div>
