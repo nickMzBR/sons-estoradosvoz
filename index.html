@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Voz Humana Pro - Saturação Máxima</title>
+    <title>Mesa de Voz Humana Pro - Volume Máximo Limpo</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -22,13 +22,13 @@
             background-color: #141522;
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(255, 150, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 255, 200, 0.2);
             text-align: center;
             max-width: 480px;
             width: 100%;
             border: 1px solid #2a2c42;
         }
-        h2 { color: #ff9900; margin-top: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
+        h2 { color: #00ffcc; margin-top: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
         textarea {
             width: 100%;
             height: 110px;
@@ -42,7 +42,7 @@
             box-sizing: border-box;
             margin-bottom: 15px;
         }
-        textarea:focus { border-color: #ff9900; outline: none; }
+        textarea:focus { border-color: #00ffcc; outline: none; }
         
         .controles-painel {
             background: #0c0d14;
@@ -66,13 +66,13 @@
         }
         input[type="range"] {
             width: 100%;
-            accent-color: #ff9900;
+            accent-color: #00ffcc;
         }
         
         button {
             width: 100%;
             padding: 15px;
-            background-color: #ff9900;
+            background-color: #00ffcc;
             color: #121212;
             border: none;
             border-radius: 8px;
@@ -82,7 +82,7 @@
             transition: 0.1s;
             text-transform: uppercase;
         }
-        button:hover { background-color: #cc7a00; }
+        button:hover { background-color: #00ccaa; }
         button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
         
         .resultado {
@@ -91,48 +91,47 @@
             background-color: #1f1f2e;
             padding: 15px;
             border-radius: 8px;
-            border-left: 5px solid #ff9900;
+            border-left: 5px solid #00ffcc;
         }
         audio { width: 100%; margin-top: 10px; }
         .download-btn {
             display: block;
             margin-top: 15px;
-            color: #ff9900;
+            color: #00ffcc;
             text-decoration: none;
             font-weight: bold;
             font-size: 16px;
             padding: 10px;
-            border: 1px solid #ff9900;
+            border: 1px solid #00ffcc;
             border-radius: 5px;
-            transition: 0.2s;
         }
-        .download-btn:hover { background-color: #ff9900; color: #121212; }
+        .download-btn:hover { background-color: #00ffcc; color: #121212; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Mesa de Voz Humana 🔊</h2>
-    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Módulo de Saturação (Soft Clipper) - Volume Percebido Máximo.</p>
+    <p style="font-size: 13px; color: #888ca0; margin-bottom: 15px;">Filtro Limitador Anti-Estouro Ativado • Escala Real até 10x.</p>
     
     <textarea id="texto" placeholder="Digite seu texto ou rima aqui..."></textarea>
 
     <div class="controles-painel">
         <div class="slider-group">
-            <label><span>Altitude / Tom da Voz:</span> <span id="val-altitude" style="color: #ff9900;">Normal (1.0x)</span></label>
+            <label><span>Altitude / Tom da Voz:</span> <span id="val-altitude" style="color: #00ffcc;">Normal (1.0x)</span></label>
             <input type="range" id="altitude" min="0.5" max="2.0" step="0.1" value="1.0" oninput="atualizarLabels()">
         </div>
 
         <div class="slider-group">
-            <label><span>Saturação de Volume (Até 100x):</span> <span id="val-ganho" style="color: #ff9900;">10x</span></label>
-            <input type="range" id="ganho" min="1" max="100" step="1" value="10" oninput="document.getElementById('val-ganho').innerText = this.value + 'x'">
+            <label><span>Ganho Protegido (Max 10x):</span> <span id="val-ganho" style="color: #00ffcc;">5x</span></label>
+            <input type="range" id="ganho" min="1" max="100" step="1" value="50" oninput="atualizarLabelGanho(this.value)">
         </div>
     </div>
 
-    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Colossal</button>
+    <button id="btn-gerar" onclick="gerarVozModificada()">Gerar Áudio Otimizado</button>
 
     <div class="resultado" id="resultado">
-        <p style="color: #ff9900; margin-top: 0; font-weight: bold;">✅ Áudio Saturado ao Máximo</p>
+        <p style="color: #00ffcc; margin-top: 0; font-weight: bold;">✅ Áudio Processado no Limite Perfeito</p>
         <audio id="player" controls></audio>
         <a id="linkDownload" class="download-btn" href="#">📥 Baixar Arquivo (.wav)</a>
     </div>
@@ -146,6 +145,20 @@ function atualizarLabels() {
     else if (alt > 1.2) txtAlt = "Agudo (Esquilo) 🐿️";
     document.getElementById('val-altitude').innerText = `${txtAlt} (${alt}x)`;
 }
+
+// Converte o valor do slider (1-100) internamente para a escala real de 1.0x a 10.0x
+function obterGanhoReal() {
+    const valorSlider = parseFloat(document.getElementById('ganho').value);
+    return (valorSlider / 10).toFixed(1);
+}
+
+function atualizarLabelGanho(valor) {
+    const ganhoReal = (valor / 10).toFixed(1);
+    document.getElementById('val-ganho').innerText = ganhoReal + 'x';
+}
+
+// Inicializa a label corretamente
+atualizarLabelGanho(50);
 
 function concatenarAudioBuffers(audioCtx, listaBuffers) {
     if (listaBuffers.length === 0) return null;
@@ -226,26 +239,13 @@ async function baixarAudioPedaço(textoPedaço) {
     return await res.arrayBuffer();
 }
 
-// Cria a curva matemática Tanh (Tangente Hiperbólica) para saturação extrema
-function criarCurvaSaturacao(multiplicador) {
-    const amostras = 44100;
-    const curva = new Float32Array(amostras);
-    for (let i = 0; i < amostras; i++) {
-        // Mapeia i de 0->44100 para x de -1 a 1
-        let x = (i * 2) / amostras - 1;
-        // Aplica a fórmula matemática de distorção suave
-        curva[i] = Math.tanh(x * multiplicador);
-    }
-    return curva;
-}
-
 async function gerarVozModificada() {
     const textoCompleto = document.getElementById('texto').value.trim();
     if (!textoCompleto) return alert("Escreva algo primeiro!");
 
     const btn = document.getElementById('btn-gerar');
     btn.disabled = true;
-    btn.innerText = "Saturando Frequências...";
+    btn.innerText = "Processando Áudio...";
 
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -269,15 +269,22 @@ async function gerarVozModificada() {
         const source = offlineCtx.createBufferSource();
         source.buffer = originalBuffer;
 
-        // Ao invés de um GainNode que passa do teto e esmaga o compressor,
-        // usamos um WaveShaperNode que empurra o áudio contra a parede de forma curva (saturação).
-        const shaper = offlineCtx.createWaveShaper();
-        const multiplicador = parseFloat(document.getElementById('ganho').value);
-        shaper.curve = criarCurvaSaturacao(multiplicador);
-        shaper.oversample = '4x'; // Evita ruídos digitais muito agudos (aliasing)
+        // Recupera o ganho real calculado (entre 1.0 e 10.0)
+        const gainNode = offlineCtx.createGain();
+        const multiplicador = parseFloat(obterGanhoReal());
+        gainNode.gain.value = multiplicador;
 
-        source.connect(shaper);
-        shaper.connect(offlineCtx.destination);
+        // Filtro anti-estouro (Brickwall Limiter) que impede qualquer clipping feio
+        const limiter = offlineCtx.createDynamicsCompressor();
+        limiter.threshold.setValueAtTime(-0.5, offlineCtx.currentTime); 
+        limiter.knee.setValueAtTime(0.0, offlineCtx.currentTime);       
+        limiter.ratio.setValueAtTime(20.0, offlineCtx.currentTime);     
+        limiter.attack.setValueAtTime(0.001, offlineCtx.currentTime);   
+        limiter.release.setValueAtTime(0.05, offlineCtx.currentTime);   
+
+        source.connect(gainNode);
+        gainNode.connect(limiter);
+        limiter.connect(offlineCtx.destination);
         
         source.start();
 
@@ -290,7 +297,7 @@ async function gerarVozModificada() {
         const player = document.getElementById('player');
         player.src = url;
         document.getElementById('linkDownload').href = url;
-        document.getElementById('linkDownload').download = `audio_saturado_${multiplicador}x.wav`;
+        document.getElementById('linkDownload').download = `audio_limpo_${multiplicador}x.wav`;
         document.getElementById('resultado').style.display = 'block';
         player.play();
 
@@ -299,7 +306,7 @@ async function gerarVozModificada() {
         console.error(e);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Gerar Áudio Colossal";
+        btn.innerText = "Gerar Áudio Otimizado";
     }
 }
 </script>
